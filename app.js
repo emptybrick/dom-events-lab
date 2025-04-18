@@ -1,20 +1,20 @@
 /*-------------------------------- Constants --------------------------------*/
 
 const buttons = document.querySelectorAll('.button');
-const output = document.querySelector('.display');
-const clear = document.querySelector('.button.clear');
-const calculate = document.querySelector('.button.calculate');
+const display = document.querySelector('.display');  // set the variable for display div so I can add input to it
+const reset = document.querySelector('.button.reset'); // set the variable for C button to be able to reset calculator
+const calculate = document.querySelector('.button.calculate'); // variable for equals
 const numbers = document.querySelectorAll('.button.number');
-const operators = document.querySelectorAll('.button.operator');
+const operators = document.querySelectorAll('.button.operator'); // variable for all operators
 
 /*-------------------------------- Variables --------------------------------*/
 
-let operator = null;
-let firstNum = null;
-let secondNum = null;
-let firstNumParsed = null;
-let secondNumParsed = null;
-let total = 0;
+let operator = null;  // holds operator as string and is used in a switch statement to decide what operation to be performed
+let firstOperand = null;  // will hold first string input, which can add together to build a longer string to parse
+let secondOperand = null;  // will hold second string input
+let firstOperandParsed = null;  // will hold numbers converted from strings
+let secondOperandParsed = null;  // will hold numbers converted from strings
+let total = 0;  // total is set to 0 as a baseline number to start calculations
 
 // i ended up coming back to figure out how to keep calculating after hitting equals
 // ran into a few issues but got it to work with adding in the parsed numbers to hold the values
@@ -26,6 +26,26 @@ let total = 0;
 // easiest, and only way i figured out cause i didnt search, how to make the number
 // multiple digits (ie. pressing 2 and 5 and 7 will turn out as 257)
 
+// encountered an issue if selecting operator without first number it sets first number as 0
+// i started to adjust things when i realized that this was actually ideal so im trying to get
+// it to be a part of the code now
+
+// i am now running into the issue where 0 can be selected first, and end up with the string ie. 01230
+// i want it to default if 0 is select first to change to the next number selected and keep adding ie. 01230 --> 1230
+// the issue is in the numbers function, im honing in.
+// i figured out that i needed to check the condition if firstOperand or secondOperand == false (loose equality)
+// took me a minute and had to go back to figure out that 2 == meant loose, because the values in those variables
+// are strings so i needed to know that it was the string "0" vs the number 0
+
+// the latest (hopefully last) edgecase i have found is division by 0, and I think i need to adjust the calculator
+// in both the calculate and operator functions for when divided by 0 will return undefined or cannot divide by 0
+// right now it will return 0/0 = NaN, or 1/0 = infinity.. which are both true cases.  but you can continue to calculate
+// i think it needs to perform a soft reset and when a number button is pressed start a new calculation
+
+// after figuring out the last edge case i went and updated my variable names to make more sense
+
+// the only thing i can think of adding is the ability for decimals.
+
 /*------------------------ Cached Element References ------------------------*/
 
 // not sure what this area was for...
@@ -36,122 +56,165 @@ let total = 0;
 //     button.addEventListener('click', (event) => {
 //         // This log is for testing purposes to verify we're getting the correct value
 //         console.log('you have clicked: ', event.target.innerText);
-//         // output.textContent = button.innerText;
+//         // display.textContent = button.innerText;
 //         // Future logic to capture the button's value would go here...
 //     });
 // });
 
-clear.addEventListener('click', () => { // sets everything back to null
-    firstNum = null;
-    secondNum = null;
-    firstNumParsed = null;
-    secondNumParsed = null;
+// sets everything back to null or 0 this is a hard reset
+// after reset display 0 or total (which at this point is 0)
+reset.addEventListener('click', () => {
+    firstOperand = null;
+    secondOperand = null;
+    firstOperandParsed = null;
+    secondOperandParsed = null;
     operator = null;
-    output.textContent = null;
+    total = 0;
+    display.textContent = total;
     console.log('Calculator has been reset.');
-    // console.log("First number is: ", firstNum, "\nSecond number is: ", secondNum, "\nOperator is: ", operator);
+    // console.log("First number is: ", firstOperand, "\nSecond number is: ", secondOperand, "\nOperator is: ", operator);
+    // console.log("First number Parsed is: ", firstOperandParsed, "\nSecond number Parsed is: ", secondOperandParsed);
 });
 
-calculate.addEventListener('click', () => { // calculates after hitting equals, then sets values to null while parsed values hold
-    firstNumParsed = parseInt(firstNum);    // the parsed values end up carrying the data to continue operations if needed
-    secondNumParsed = parseInt(secondNum);
-    if (firstNum !== null && secondNum !== null) {
+// sends values to parsed variables to hold while total pulls from them
+// uses a switch statement using the string in operator value to decide operation
+// throws error when operator is not selected before calculating, and does nothing (waits for input)
+// total is based on parsed variables so first and second number variables can be reset to continue calculating
+// also performs a soft reset to allow continuing calculations, or if a number is selected right after,
+// it will start a new calculation
+calculate.addEventListener('click', () => {
+    firstOperandParsed = parseInt(firstOperand);
+    secondOperandParsed = parseInt(secondOperand);
+    if (firstOperand !== null && secondOperand !== null) {
         switch (operator) {
             case "+":
-                total = firstNumParsed + secondNumParsed;
+                total = firstOperandParsed + secondOperandParsed;
                 break;
             case "-":
-                total = firstNumParsed - secondNumParsed;
+                total = firstOperandParsed - secondOperandParsed;
                 break;
             case "/":
-                total = firstNumParsed / secondNumParsed;
+                total = firstOperandParsed / secondOperandParsed;
                 break;
             case "*":
-                total = firstNumParsed * secondNumParsed;
+                total = firstOperandParsed * secondOperandParsed;
                 break;
             default:
                 console.log('Error, check inputs.');
-        }
-        output.textContent = total;
-        firstNum = null; // set to null to continue calculating if operator pressed, or to soft reset for new calc
-        secondNum = null;
+        };
+        // checking if result is NaN or Infinity (dividing by zero)
+        // if so it sets total to 0
+        if (total == Infinity || isNaN(total)) {
+            display.textContent = "Can't Divide By Zero";
+            console.log("Cannot Divide By Zero! This makes the total: ", total);
+            total = 0;
+        } else {
+            display.textContent = total;
+            console.log("The Total is: ", total);
+        };
+        // soft reset to continue calculations
+        firstOperand = null;
+        secondOperand = null;
         operator = null;
-        // console.log("First number is: ", firstNumParsed, "and its a ", typeof (firstNumParsed));
-        // console.log("Second number is: ", secondNumParsed, "and its a ", typeof (secondNumParsed));
-        // console.log("Operator is: ", operator);
-        console.log("The Total is: ", total);
     }
-    else {
-        console.log('Error, check inputs.');
-    }
+    // checking if there are inputs for first number and operator and if its just
+    // a case second number wasnt set, to keep display and do nothing
+    else if (firstOperand !== null && operator !== null) {
+        console.log('Error during calculating, check inputs.');
+        display.textContent = firstOperand + " " + operator;
+    // if calculate was selected before any inputs done, keeps value on display and do nothing    
+    } else {
+        console.log('Error during calculating, check inputs.');
+        display.textContent = firstOperand;
+    };
 });
 
 /*-------------------------------- Functions --------------------------------*/
-
-operators.forEach((operand) => {
-    operand.addEventListener('click', (event) => {
-        if (secondNum === null) { // uses second number condition before setting operator
-            if (firstNum === null) {
-                console.log("Error, Need to select input before operation.");
-                output.textContent = "Error";
+// after click operator theres a few conditions its looking for to decide what to do.
+// uses second number condition before setting operator.
+// if second number hasnt been set this looks for first number value, if null it sets to total.
+// setting to total will either set as previous calculation value,
+// or 0 to be able to start from 0 if operator is selected first or continue from previous calculation.
+// if second number is input already, preforms a calculation (second number can only be input after an operator)
+// also will perform a soft reset on variables to allow continuing calculations
+operators.forEach((operation) => {
+    operation.addEventListener('click', (event) => {
+        if (secondOperand === null) {
+            if (firstOperand === null) {
+                firstOperand = total;
+                operator = event.target.innerText;
+                display.textContent = firstOperand + " " + operator;// so the operator shows on display also
+                // console.log("Error, Need to select input before operation.");
             } else {
                 operator = event.target.innerText;
-                console.log("Operator is: ", operator);
-                output.textContent = firstNum + " " + operator; // so the operator shows on display also
-                // console.log("Operator is a:", typeof (operator));
-                return operator;
+                display.textContent = firstOperand + " " + operator;
+                // console.log("Operator is: ", operator); 
+                // console.log("Operator is a:", typeof (operator));                
             }
-        } else { // if second number is input already, preforms a calculation (second number can only be input after an operator)
-            firstNumParsed = parseInt(firstNum);
-            secondNumParsed = parseInt(secondNum);
+        } else {
+            firstOperandParsed = parseInt(firstOperand);
+            secondOperandParsed = parseInt(secondOperand);
             switch (operator) {
                 case "+":
-                    total = firstNumParsed + secondNumParsed;
+                    total = firstOperandParsed + secondOperandParsed;
                     break;
                 case "-":
-                    total = firstNumParsed - secondNumParsed;
+                    total = firstOperandParsed - secondOperandParsed;
                     break;
                 case "/":
-                    total = firstNumParsed / secondNumParsed;
+                    total = firstOperandParsed / secondOperandParsed;
                     break;
                 case "*":
-                    total = firstNumParsed * secondNumParsed;
+                    total = firstOperandParsed * secondOperandParsed;
                     break;
                 default:
                     console.log('Error, check inputs.');
             };
+            // checking if result is NaN or Infinity (dividing by zero) if so reset calculator            
+            if (total === Infinity || isNaN(total)) {
+                display.textContent = "Can't Divide By Zero";
+                firstOperand = null;
+                secondOperand = null;
+                operator = null;
+                console.log("Cannot Divide By Zero! This makes the total: ", total);
+                total = 0;
+            } else {
+                firstOperand = total; // sets first num to total to allow continuing operations, performs a soft reset
+                secondOperand = null;
+                operator = event.target.innerText;
+                display.textContent = total + " " + operator;
+                console.log("The Total is: ", total);
+                total = 0; // sets total to 0 after display message
+            };
         };
-        operator = event.target.innerText;
-        firstNum = total; // sets first num to total to allow continuing operations
-        secondNum = null;
-        output.textContent = total + " " + operator;
-        // console.log(operator, firstNum, secondNum);
     });
 });
 
-
+// i have the function checking first if the variable is null, or if the variable is 0, so u cant start with 0 ie. 0123
+// first it checks for operator condition before setting first number, will set first number if no operator is selected
+// then it sets initial first number, if operator is selected before any number, the operator function takes care of it
+// since numbers are a string we can add numbers together to build them out (ie. 1+2 = 12)
+// if operator is set it will go to second number and assign values
 numbers.forEach((number) => {
     number.addEventListener('click', (event) => {
-        if (operator === null) { // checks for operator condition before setting first number
-            if (firstNum === null) { // sets initial first number
-                firstNum = event.target.innerText;
-                console.log('First number is: ', firstNum);
-            } else { // since numbers are a string we can add numbers together to build them out (ie. 1+2 = 12)
-                firstNum = firstNum + event.target.innerText;
-                console.log('First number is now: ', firstNum);
-            };
-            output.textContent = firstNum;
-            return firstNum;
-        } else {
-            if (secondNum === null) {
-                secondNum = event.target.innerText;
-                console.log('Second number is: ', secondNum);
+        if (operator === null) { // checks for operator condition 
+            if (firstOperand === null || firstOperand == false) {
+                firstOperand = event.target.innerText;
+                // console.log('First number is: ', firstOperand);
             } else {
-                secondNum = secondNum + event.target.innerText;
-                console.log('Second number is now: ', secondNum);
+                firstOperand = firstOperand + event.target.innerText;
+                // console.log('First number is now: ', firstOperand);
             };
-            output.textContent = firstNum + " " + operator + " " + secondNum; // added to show all numbers and operator in display
-            return secondNum;
+            display.textContent = firstOperand;
+        } else {
+            if (secondOperand === null || secondOperand == false) {
+                secondOperand = event.target.innerText;
+                // console.log('Second number is: ', secondOperand);
+            } else {
+                secondOperand = secondOperand + event.target.innerText;
+                // console.log('Second number is now: ', secondOperand);
+            };
+            display.textContent = firstOperand + " " + operator + " " + secondOperand; // displays
         };
     });
 });
