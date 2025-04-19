@@ -6,6 +6,7 @@ const reset = document.querySelector('.button.reset'); // set the variable for C
 const calculate = document.querySelector('.button.calculate'); // variable for equals
 const numbers = document.querySelectorAll('.button.number');
 const operators = document.querySelectorAll('.button.operator'); // variable for all operators
+const invert = document.querySelector('.button.invert'); // variable to change the sign (plus/minus or negative/positive)
 
 /*-------------------------------- Variables --------------------------------*/
 
@@ -45,6 +46,9 @@ let total = 0;  // total is set to 0 as a baseline number to start calculations
 // after figuring out the last edge case i went and updated my variable names to make more sense
 
 // the only thing i can think of adding is the ability for decimals.
+// i ended up adding in the decimal button, and put it as a number and everything worked smoothely..
+// although i got annoyed by the button layout, so i added another button to invert the sign of the number
+// it took a little bit of figuring out
 
 /*------------------------ Cached Element References ------------------------*/
 
@@ -83,8 +87,8 @@ reset.addEventListener('click', () => {
 // also performs a soft reset to allow continuing calculations, or if a number is selected right after,
 // it will start a new calculation
 calculate.addEventListener('click', () => {
-    firstOperandParsed = parseInt(firstOperand);
-    secondOperandParsed = parseInt(secondOperand);
+    firstOperandParsed = parseFloat(firstOperand);
+    secondOperandParsed = parseFloat(secondOperand);
     if (firstOperand !== null && secondOperand !== null) {
         switch (operator) {
             case "+":
@@ -122,11 +126,44 @@ calculate.addEventListener('click', () => {
     else if (firstOperand !== null && operator !== null) {
         console.log('Error during calculating, check inputs.');
         display.textContent = firstOperand + " " + operator;
-    // if calculate was selected before any inputs done, keeps value on display and do nothing    
+        // if calculate was selected before any inputs done, keeps value on display and do nothing    
     } else {
         console.log('Error during calculating, check inputs.');
         display.textContent = firstOperand;
     };
+});
+
+// adding a invert sign function 
+// got the idea of using -firstOperand from searching online.. the rest i did myself
+// its first checking is the second operand is null (no input), if so it changes the sign of the first operand
+// when changing the sign it checks if its negative already if not it changes to negative, or else positive
+// i had to set a display check so it would display the operator if selected or not
+
+// i had another if statement changing it from negative to positive.. but after console logging, i found that
+// it didnt use it and just used the first if statement changing it to negative.. i dont know why
+// i was using the following but realized it didnt use half of the code:
+// if (secondOperand === null) {
+//     if (firstOperand != -firstOperand) {
+//         console.log("it changed to negative")
+//         firstOperand = -firstOperand;
+//     } else {
+//         console.log("it changed to positive")
+//         firstOperand = (firstOperand * 2) + firstOperand;
+//     };
+
+invert.addEventListener('click', () => {
+    if (secondOperand === null) {
+        // i dont know why this works to change it from negative to positive and vice versa
+        firstOperand = -firstOperand;
+        if (operator === null) {
+            display.textContent = firstOperand;
+        } else {
+            display.textContent = firstOperand + " " + operator;
+        }
+    } else {
+        secondOperand = -secondOperand;
+        display.textContent = firstOperand + " " + operator + " " + secondOperand;
+    }
 });
 
 /*-------------------------------- Functions --------------------------------*/
@@ -152,8 +189,8 @@ operators.forEach((operation) => {
                 // console.log("Operator is a:", typeof (operator));                
             }
         } else {
-            firstOperandParsed = parseInt(firstOperand);
-            secondOperandParsed = parseInt(secondOperand);
+            firstOperandParsed = parseFloat(firstOperand);
+            secondOperandParsed = parseFloat(secondOperand);
             switch (operator) {
                 case "+":
                     total = firstOperandParsed + secondOperandParsed;
