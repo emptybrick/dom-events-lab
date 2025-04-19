@@ -7,6 +7,7 @@ const calculate = document.querySelector('.button.calculate'); // variable for e
 const numbers = document.querySelectorAll('.button.number');
 const operators = document.querySelectorAll('.button.operator'); // variable for all operators
 const invert = document.querySelector('.button.invert'); // variable to change the sign (plus/minus or negative/positive)
+const decimal = document.querySelector('.button.decimal'); // variable for the decimal
 
 /*-------------------------------- Variables --------------------------------*/
 
@@ -49,6 +50,11 @@ let total = 0;  // total is set to 0 as a baseline number to start calculations
 // i ended up adding in the decimal button, and put it as a number and everything worked smoothely..
 // although i got annoyed by the button layout, so i added another button to invert the sign of the number
 // it took a little bit of figuring out
+// ended up with the case u can keep adding decimals.. going to seperate decimal from numbers and set its own function
+
+// next issue, which is a minor graphical problem.. is when u press decimal and then an operator it leaves 
+// the number with just a decimal then the operator on the display ie. 2. + ## or 0. - ##.. trying to find solution
+// i think it has to do with the operator function 
 
 /*------------------------ Cached Element References ------------------------*/
 
@@ -126,44 +132,76 @@ calculate.addEventListener('click', () => {
     else if (firstOperand !== null && operator !== null) {
         console.log('Error during calculating, check inputs.');
         display.textContent = firstOperand + " " + operator;
+    }
+    else if (firstOperand !== null && operator === null) {
+        console.log('Error during calculating, check inputs.');
+        display.textContent = firstOperand;
         // if calculate was selected before any inputs done, keeps value on display and do nothing    
     } else {
         console.log('Error during calculating, check inputs.');
-        display.textContent = firstOperand;
+        display.textContent = 0;
     };
 });
 
 // adding a invert sign function 
 // got the idea of using -firstOperand from searching online.. the rest i did myself
-// its first checking is the second operand is null (no input), if so it changes the sign of the first operand
-// when changing the sign it checks if its negative already if not it changes to negative, or else positive
+// its first checking if the second operand is null (no input), if so it changes the sign of the first operand
+// it then checks if operand is 0 and if so do nothing, if not it inverts the sign by making value = -value
 // i had to set a display check so it would display the operator if selected or not
-
-// i had another if statement changing it from negative to positive.. but after console logging, i found that
-// it didnt use it and just used the first if statement changing it to negative.. i dont know why
-// i was using the following but realized it didnt use half of the code:
-// if (secondOperand === null) {
-//     if (firstOperand != -firstOperand) {
-//         console.log("it changed to negative")
-//         firstOperand = -firstOperand;
-//     } else {
-//         console.log("it changed to positive")
-//         firstOperand = (firstOperand * 2) + firstOperand;
-//     };
-
 invert.addEventListener('click', () => {
     if (secondOperand === null) {
-        // i dont know why this works to change it from negative to positive and vice versa
-        firstOperand = -firstOperand;
         if (operator === null) {
-            display.textContent = firstOperand;
+            if (firstOperand === 0) {
+                display.textContent = firstOperand;
+            } else {
+                firstOperand = -firstOperand;
+                display.textContent = firstOperand;
+            }
         } else {
+            firstOperand = -firstOperand;
             display.textContent = firstOperand + " " + operator;
         }
     } else {
-        secondOperand = -secondOperand;
-        display.textContent = firstOperand + " " + operator + " " + secondOperand;
+        if (secondOperand === 0) {
+            display.textContent = secondOperand;
+        } else {
+            secondOperand = -secondOperand;
+            display.textContent = firstOperand + " " + operator + " " + secondOperand;
+        };
     }
+});
+
+// decimal event listener
+// checks if operator is null to see if its setting first or second operand value
+// checks if operand is null or 0 to set a 0.0 display and value
+// if not it assumes it starts with any other number and adds more numbers
+// this was to allow it to start from zero, and display 0. if decimal is clicked first, or zero then decimal
+// lookes to see if theres a decimal before adding more numbers, if there is it will just display and do nothing
+decimal.addEventListener('click', (event) => {
+    if (operator === null) {
+        if (firstOperand === null || firstOperand == 0) {
+            console.log('setting decimal');
+            firstOperand = 0 + event.target.innerText;
+        } else {
+            if (String(firstOperand).includes(".")) {
+                console.log('first number already has decimal');
+            } else {
+                firstOperand = firstOperand + event.target.innerText;
+            };
+        };
+        display.textContent = firstOperand;
+    } else {
+        if (secondOperand === null) {
+            secondOperand = 0 + event.target.innerText;
+        } else {
+            if (String(secondOperand).includes(".")) {
+                console.log('second number already has decimal');
+            } else {
+                secondOperand = secondOperand + event.target.innerText;
+            };
+        };
+        display.textContent = firstOperand + " " + operator + " " + secondOperand;
+    };
 });
 
 /*-------------------------------- Functions --------------------------------*/
@@ -180,14 +218,17 @@ operators.forEach((operation) => {
             if (firstOperand === null) {
                 firstOperand = total;
                 operator = event.target.innerText;
-                display.textContent = firstOperand + " " + operator;// so the operator shows on display also
-                // console.log("Error, Need to select input before operation.");
+                display.textContent = firstOperand + " " + operator; 
             } else {
+                if (String(firstOperand).includes(".")) { // fix graphic issue with showing ie. (0. + ## or 2. - ##)
+                    firstOperand = Number.parseFloat(firstOperand)
+                    operator = event.target.innerText;
+                    display.textContent = firstOperand + " " + operator;
+                } else {
                 operator = event.target.innerText;
-                display.textContent = firstOperand + " " + operator;
-                // console.log("Operator is: ", operator); 
-                // console.log("Operator is a:", typeof (operator));                
-            }
+                display.textContent = firstOperand + " " + operator;            
+            };
+        };
         } else {
             firstOperandParsed = parseFloat(firstOperand);
             secondOperandParsed = parseFloat(secondOperand);
@@ -208,7 +249,7 @@ operators.forEach((operation) => {
                     console.log('Error, check inputs.');
             };
             // checking if result is NaN or Infinity (dividing by zero) if so reset calculator            
-            if (total === Infinity || isNaN(total)) {
+            if (total === Infinity || isNaN(total)) { // had to learn about isNaN after looking for solution
                 display.textContent = "Can't Divide By Zero";
                 firstOperand = null;
                 secondOperand = null;
@@ -232,26 +273,32 @@ operators.forEach((operation) => {
 // then it sets initial first number, if operator is selected before any number, the operator function takes care of it
 // since numbers are a string we can add numbers together to build them out (ie. 1+2 = 12)
 // if operator is set it will go to second number and assign values
+// kept throwing an error in the case of 0.0 and trying to invert, had to look up and found that !String method for a fix
+// found out .includes only is strings, had to add that else if so multiple zeros cant be input when starting from null
 numbers.forEach((number) => {
     number.addEventListener('click', (event) => {
-        if (operator === null) { // checks for operator condition 
-            if (firstOperand === null || firstOperand == false) {
+        if (operator === null) {
+            if (firstOperand == null) {
                 firstOperand = event.target.innerText;
-                // console.log('First number is: ', firstOperand);
+            }
+            else if (firstOperand != null && firstOperand == 0 && !String(firstOperand).includes(".")) { // prevent 0000
+                console.log('first operand already is 0');
+                firstOperand = event.target.innerText;
             } else {
                 firstOperand = firstOperand + event.target.innerText;
-                // console.log('First number is now: ', firstOperand);
             };
             display.textContent = firstOperand;
         } else {
-            if (secondOperand === null || secondOperand == false) {
+            if (secondOperand === null) {
                 secondOperand = event.target.innerText;
-                // console.log('Second number is: ', secondOperand);
+            }
+            else if (secondOperand != null && secondOperand == 0 && !String(secondOperand).includes(".")) {
+                secondOperand = event.target.innerText;
             } else {
                 secondOperand = secondOperand + event.target.innerText;
-                // console.log('Second number is now: ', secondOperand);
             };
-            display.textContent = firstOperand + " " + operator + " " + secondOperand; // displays
+            display.textContent = firstOperand + " " + operator + " " + secondOperand;
         };
     });
-});
+
+}); 
