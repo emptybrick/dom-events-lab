@@ -114,8 +114,11 @@ calculate.addEventListener('click', () => {
         };
         // checking if result is NaN or Infinity (dividing by zero)
         // if so it sets total to 0
-        if (total == Infinity || isNaN(total)) {
+        if (total == Infinity || total === -Infinity || isNaN(total)) {
             display.textContent = "Can't Divide By Zero";
+            firstOperand = null;
+            secondOperand = null;
+            operator = null;
             console.log("Cannot Divide By Zero! This makes the total: ", total);
             total = 0;
         } else {
@@ -249,7 +252,7 @@ operators.forEach((operation) => {
                     console.log('Error, check inputs.');
             };
             // checking if result is NaN or Infinity (dividing by zero) if so reset calculator            
-            if (total === Infinity || isNaN(total)) { // had to learn about isNaN after looking for solution
+            if (total === Infinity || total === -Infinity || isNaN(total)) { // had to learn about isNaN after looking for solution
                 display.textContent = "Can't Divide By Zero";
                 firstOperand = null;
                 secondOperand = null;
